@@ -5,110 +5,759 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Friendship Verification Portal</title>
 <style>
-body{margin:0;font-family:Arial,sans-serif;background:linear-gradient(135deg,#667eea,#764ba2,#f093fb);color:#fff;overflow:hidden}
-.screen{display:none;height:100vh;justify-content:center;align-items:center;text-align:center;padding:20px}
-.active{display:flex;flex-direction:column}
-.card{background:rgba(255,255,255,.12);backdrop-filter:blur(10px);padding:25px;border-radius:20px;max-width:700px;width:90%}
-button{padding:12px 22px;border:none;border-radius:12px;margin:8px;font-size:16px;cursor:pointer}
-.yes{background:#4caf50;color:white}.no{background:#ff5252;color:white}.other{background:#ffb300;color:black}
-.bar{width:320px;height:22px;background:rgba(255,255,255,.2);border-radius:20px;overflow:hidden}
-.fill{height:100%;width:0;background:white}
-.emoji{position:fixed;opacity:.25;animation:float 10s linear infinite}
-@keyframes float{from{transform:translateY(100vh)}to{transform:translateY(-100px)}}
+  *{margin:0;padding:0;box-sizing:border-box}
+  :root{
+    --pink:#ff6b9d;--purple:#c44dff;--blue:#4d79ff;--dark:#0a0a1a;
+    --glass:rgba(255,255,255,0.08);--glass-border:rgba(255,255,255,0.15);
+    --text:#fff;--muted:rgba(255,255,255,0.6);
+  }
+  body{
+    min-height:100vh;background:var(--dark);
+    background-image:radial-gradient(ellipse at 20% 50%,rgba(196,77,255,0.15) 0%,transparent 60%),
+      radial-gradient(ellipse at 80% 20%,rgba(255,107,157,0.15) 0%,transparent 60%),
+      radial-gradient(ellipse at 50% 80%,rgba(77,121,255,0.1) 0%,transparent 60%);
+    font-family:'Segoe UI',system-ui,sans-serif;color:var(--text);
+    overflow-x:hidden;
+  }
+  .glass{
+    background:var(--glass);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+    border:1px solid var(--glass-border);border-radius:24px;
+  }
+  .btn{
+    padding:14px 32px;border-radius:50px;border:none;cursor:pointer;
+    font-size:16px;font-weight:600;transition:all 0.3s;display:inline-flex;
+    align-items:center;gap:8px;
+  }
+  .btn-primary{
+    background:linear-gradient(135deg,var(--pink),var(--purple));color:#fff;
+    box-shadow:0 8px 32px rgba(255,107,157,0.3);
+  }
+  .btn-primary:hover{transform:translateY(-2px);box-shadow:0 12px 40px rgba(255,107,157,0.4)}
+  .btn-secondary{
+    background:var(--glass);border:1px solid var(--glass-border);color:var(--text);
+    backdrop-filter:blur(10px);
+  }
+  .btn-secondary:hover{background:rgba(255,255,255,0.15);transform:translateY(-2px)}
+  .btn:active{transform:scale(0.97)}
+  .screen{display:none;min-height:100vh;align-items:center;justify-content:center;padding:20px}
+  .screen.active{display:flex}
+  h1{font-size:clamp(28px,5vw,52px);font-weight:800;line-height:1.1}
+  h2{font-size:clamp(20px,3.5vw,32px);font-weight:700}
+  p{color:var(--muted);line-height:1.6}
+  .gradient-text{
+    background:linear-gradient(135deg,var(--pink),var(--purple),var(--blue));
+    -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  }
+
+  /* LANDING */
+  #landing{flex-direction:column;text-align:center;gap:0}
+  .landing-inner{max-width:680px;margin:0 auto}
+  .badge{
+    display:inline-flex;align-items:center;gap:8px;padding:8px 20px;
+    border-radius:50px;background:rgba(255,107,157,0.1);border:1px solid rgba(255,107,157,0.3);
+    font-size:13px;color:var(--pink);margin-bottom:28px;
+  }
+  .badge-dot{width:8px;height:8px;background:var(--pink);border-radius:50%;animation:pulse 1.5s infinite}
+  @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.5;transform:scale(1.3)}}
+  .landing-inner h1{margin-bottom:20px}
+  .landing-inner p{font-size:18px;margin-bottom:40px;max-width:520px;margin-left:auto;margin-right:auto}
+  .stats-row{display:flex;gap:16px;justify-content:center;flex-wrap:wrap;margin-bottom:40px}
+  .stat-card{padding:16px 28px;text-align:center}
+  .stat-num{font-size:28px;font-weight:800;background:linear-gradient(135deg,var(--pink),var(--purple));
+    -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+  .stat-label{font-size:12px;color:var(--muted);margin-top:4px}
+  .scroll-hint{margin-top:20px;color:var(--muted);font-size:13px;animation:bounce 2s infinite}
+  @keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(6px)}}
+
+  /* LOADING */
+  #loading{flex-direction:column;text-align:center;gap:0}
+  .loading-inner{max-width:520px;width:100%;margin:0 auto;padding:40px 32px}
+  .loading-inner h2{margin-bottom:8px}
+  .loading-inner p{margin-bottom:40px;font-size:15px}
+  .ai-orb{
+    width:100px;height:100px;border-radius:50%;margin:0 auto 32px;
+    background:linear-gradient(135deg,var(--pink),var(--purple));
+    display:flex;align-items:center;justify-content:center;font-size:40px;
+    animation:orb-spin 3s ease-in-out infinite;position:relative;
+  }
+  @keyframes orb-spin{0%,100%{transform:scale(1) rotate(0deg)}50%{transform:scale(1.1) rotate(10deg)}}
+  .orb-ring{
+    position:absolute;inset:-8px;border-radius:50%;
+    border:2px solid transparent;
+    border-top-color:var(--pink);border-right-color:var(--purple);
+    animation:spin 1.5s linear infinite;
+  }
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .progress-bar{
+    width:100%;height:8px;background:rgba(255,255,255,0.1);border-radius:50px;overflow:hidden;
+    margin-bottom:20px;
+  }
+  .progress-fill{
+    height:100%;width:0%;border-radius:50px;
+    background:linear-gradient(90deg,var(--pink),var(--purple));
+    transition:width 0.3s;
+  }
+  .loading-steps{list-style:none;text-align:left;display:flex;flex-direction:column;gap:12px}
+  .loading-step{
+    display:flex;align-items:center;gap:12px;font-size:14px;
+    color:var(--muted);transition:color 0.3s;
+  }
+  .loading-step.done{color:#fff}
+  .step-icon{width:24px;height:24px;border-radius:50%;background:rgba(255,255,255,0.1);
+    display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0}
+  .loading-step.done .step-icon{background:linear-gradient(135deg,var(--pink),var(--purple))}
+
+  /* QUESTIONS */
+  #questions{flex-direction:column;gap:0}
+  .q-container{max-width:600px;width:100%;margin:0 auto;padding:20px}
+  .progress-dots{display:flex;gap:8px;justify-content:center;margin-bottom:32px}
+  .dot{width:10px;height:10px;border-radius:50%;background:rgba(255,255,255,0.2);transition:all 0.3s}
+  .dot.active{background:linear-gradient(135deg,var(--pink),var(--purple));transform:scale(1.3)}
+  .dot.done{background:var(--pink)}
+  .q-card{padding:40px 36px;animation:fadeIn 0.4s ease}
+  @keyframes fadeIn{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+  .q-emoji{font-size:48px;margin-bottom:16px;display:block}
+  .q-card h2{margin-bottom:12px}
+  .q-card p{margin-bottom:32px;font-size:15px}
+  .q-options{display:flex;flex-direction:column;gap:12px}
+  .q-option{
+    padding:16px 20px;border-radius:16px;background:rgba(255,255,255,0.06);
+    border:1px solid rgba(255,255,255,0.1);cursor:pointer;text-align:left;
+    color:var(--text);font-size:15px;transition:all 0.3s;
+  }
+  .q-option:hover{background:rgba(255,107,157,0.15);border-color:rgba(255,107,157,0.4);transform:translateX(6px)}
+  .q-option.selected{background:linear-gradient(135deg,rgba(255,107,157,0.2),rgba(196,77,255,0.2));
+    border-color:var(--pink)}
+  .btn-row{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:24px}
+
+  /* DATE QUESTION SPECIAL */
+  .btn-no{
+    background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);
+    color:var(--muted);padding:14px 28px;border-radius:50px;
+    cursor:pointer;font-size:16px;font-weight:600;transition:all 0.3s;
+  }
+  .btn-no:hover{background:rgba(255,255,255,0.15)}
+
+  /* TOAST */
+  #toast-container{position:fixed;top:20px;right:20px;z-index:9999;display:flex;flex-direction:column;gap:8px;max-width:320px}
+  .toast{
+    padding:14px 20px;border-radius:14px;font-size:14px;font-weight:500;
+    backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,0.15);
+    animation:slideIn 0.3s ease;color:#fff;
+    background:rgba(20,20,40,0.9);
+  }
+  .toast-success{border-color:rgba(100,255,150,0.3);box-shadow:0 4px 20px rgba(100,255,150,0.1)}
+  .toast-error{border-color:rgba(255,80,80,0.3);box-shadow:0 4px 20px rgba(255,80,80,0.1)}
+  .toast-info{border-color:rgba(255,107,157,0.3);box-shadow:0 4px 20px rgba(255,107,157,0.1)}
+  @keyframes slideIn{from{opacity:0;transform:translateX(100px)}to{opacity:1;transform:translateX(0)}}
+  .toast.removing{animation:slideOut 0.3s ease forwards}
+  @keyframes slideOut{to{opacity:0;transform:translateX(100px)}}
+
+  /* SYSTEM ERROR */
+  .error-screen{
+    position:fixed;inset:0;background:rgba(0,0,0,0.9);z-index:8888;
+    display:none;align-items:center;justify-content:center;flex-direction:column;gap:20px;
+    font-family:monospace;color:#ff4444;
+  }
+  .error-screen.active{display:flex}
+  .error-text{font-size:clamp(14px,2vw,18px);max-width:600px;text-align:center;line-height:1.8}
+  .error-blink{animation:blink 0.7s infinite}
+  @keyframes blink{50%{opacity:0}}
+
+  /* SENDING */
+  #sending{flex-direction:column;text-align:center;gap:0}
+  .send-inner{max-width:480px;width:100%;margin:0 auto;padding:40px 28px}
+  .send-icon{font-size:72px;animation:launch 1s ease-out forwards;display:block;margin-bottom:24px}
+  @keyframes launch{0%{transform:scale(0) rotate(-20deg)}60%{transform:scale(1.2) rotate(5deg)}100%{transform:scale(1) rotate(0deg)}}
+  .send-lines{display:flex;flex-direction:column;gap:10px;margin-top:32px;text-align:left}
+  .send-line{
+    display:flex;align-items:center;gap:12px;padding:12px 16px;border-radius:12px;
+    background:rgba(255,255,255,0.05);font-size:14px;opacity:0;
+    transition:all 0.5s;
+  }
+  .send-line.visible{opacity:1;transform:translateX(0)}
+  .line-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+  .dot-spin{width:18px;height:18px;border-radius:50%;border:2px solid rgba(255,255,255,0.1);
+    border-top-color:var(--pink);animation:spin 1s linear infinite;flex-shrink:0}
+
+  /* DASHBOARD */
+  #dashboard{flex-direction:column;gap:0;align-items:flex-start;padding:24px}
+  .dash-inner{max-width:720px;width:100%;margin:0 auto}
+  .dash-header{text-align:center;padding:32px 20px 24px;margin-bottom:24px}
+  .friend-avatar{
+    width:80px;height:80px;border-radius:50%;margin:0 auto 16px;
+    background:linear-gradient(135deg,var(--pink),var(--purple));
+    display:flex;align-items:center;justify-content:center;font-size:36px;
+    border:3px solid rgba(255,255,255,0.2);
+  }
+  .friendship-score{
+    font-size:72px;font-weight:900;
+    background:linear-gradient(135deg,var(--pink),var(--purple));
+    -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+    line-height:1;margin-bottom:8px;
+  }
+  .score-label{font-size:14px;color:var(--muted);margin-bottom:24px}
+  .dash-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-bottom:24px}
+  .dash-card{padding:20px 22px}
+  .dash-card-icon{font-size:28px;margin-bottom:10px}
+  .dash-card h3{font-size:15px;font-weight:600;margin-bottom:6px}
+  .dash-card p{font-size:13px;color:var(--muted)}
+  .achievements{margin-bottom:24px}
+  .ach-title{font-size:18px;font-weight:700;margin-bottom:16px;display:flex;align-items:center;gap:10px}
+  .ach-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:12px}
+  .ach-card{
+    padding:16px;border-radius:16px;text-align:center;
+    background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);
+  }
+  .ach-card .icon{font-size:32px;margin-bottom:8px}
+  .ach-card .name{font-size:12px;font-weight:600;margin-bottom:4px}
+  .ach-card .desc{font-size:11px;color:var(--muted)}
+  .ach-card.unlocked{
+    background:linear-gradient(135deg,rgba(255,107,157,0.1),rgba(196,77,255,0.1));
+    border-color:rgba(255,107,157,0.3);
+  }
+
+  /* FINAL MESSAGE */
+  #final{flex-direction:column;text-align:center;gap:0}
+  .final-inner{max-width:560px;width:100%;margin:0 auto;padding:32px 24px}
+  .final-card{padding:36px 32px}
+  .final-card h1{font-size:clamp(24px,4vw,36px);margin-bottom:8px}
+  .final-card .subtitle{font-size:15px;margin-bottom:32px;font-style:italic}
+  .gift-icon{font-size:64px;margin-bottom:24px;display:block;animation:gift-bounce 1s ease-in-out infinite alternate}
+  @keyframes gift-bounce{from{transform:translateY(0) rotate(-5deg)}to{transform:translateY(-12px) rotate(5deg)}}
+  .delivery-list{text-align:left;display:flex;flex-direction:column;gap:10px;margin:24px 0}
+  .delivery-item{
+    display:flex;align-items:center;gap:12px;padding:12px 16px;border-radius:12px;
+    background:rgba(255,255,255,0.05);font-size:14px;
+  }
+  .check-yes{color:#6dff9a;font-size:18px}
+  .check-no{color:#ff6060;font-size:18px}
+  .final-note{
+    font-size:13px;color:var(--muted);margin-top:20px;font-style:italic;
+    padding:12px 16px;border-radius:10px;background:rgba(255,255,255,0.04);
+  }
+
+  /* CONFETTI & FLOATERS */
+  #confetti-canvas{position:fixed;inset:0;pointer-events:none;z-index:9000}
+  .emoji-floater{
+    position:fixed;pointer-events:none;z-index:8900;font-size:28px;
+    animation:float-up linear forwards;
+  }
+  @keyframes float-up{
+    0%{opacity:1;transform:translateY(0) scale(1) rotate(0deg)}
+    100%{opacity:0;transform:translateY(-100vh) scale(0.5) rotate(360deg)}
+  }
+
+  @media(max-width:600px){
+    .q-card{padding:28px 20px}
+    .stats-row{gap:12px}
+    .stat-card{padding:12px 20px}
+    .landing-inner p{font-size:16px}
+    .btn-row{flex-direction:column;align-items:center}
+    .dash-grid{grid-template-columns:1fr 1fr}
+    .final-card{padding:24px 18px}
+  }
 </style>
 </head>
 <body>
 
-<div id="loading" class="screen active">
-<h1>🧠 Friendship Verification Portal</h1>
-<div class="bar"><div class="fill" id="fill"></div></div>
-<p id="status">Checking WhatsApp reply speed...</p>
+<div id="toast-container"></div>
+<canvas id="confetti-canvas"></canvas>
+
+<div id="error-screen" class="error-screen">
+  <div style="font-size:48px">⚠️</div>
+  <div class="error-text">
+    <div class="error-blink">SYSTEM ERROR 404: ENTHUSIASM NOT FOUND</div><br>
+    ERROR: User declined next month visit.<br>
+    Initiating friendship.exe crash...<br>
+    Loading guilt_trip.dll...<br>
+    Rebooting expectations...<br><br>
+    Just kidding 😅 You can't say no though, it's mandatory. 😇
+  </div>
+  <button class="btn btn-primary" onclick="dismissError()">Fine... I'll consider it 😭</button>
 </div>
 
-<div id="app" class="screen"><div class="card" id="card"></div></div>
+<!-- SCREEN 1: LANDING -->
+<div id="landing" class="screen active">
+  <div class="landing-inner">
+    <div class="badge"><span class="badge-dot"></span>Beta v2.7 — Highly Scientific™</div>
+    <h1>Friendship<br><span class="gradient-text">Verification</span><br>Portal</h1>
+    <p style="margin-top:20px">A rigorous AI-powered assessment to determine whether you qualify for continued friendship privileges. Results may be ignored.</p>
+    <div class="stats-row">
+      <div class="stat-card glass">
+        <div class="stat-num">99.9%</div>
+        <div class="stat-label">Accuracy Rate</div>
+      </div>
+      <div class="stat-card glass">
+        <div class="stat-num">1</div>
+        <div class="stat-label">Friends Assessed</div>
+      </div>
+      <div class="stat-card glass">
+        <div class="stat-num">∞</div>
+        <div class="stat-label">Bias Level</div>
+      </div>
+    </div>
+    <button class="btn btn-primary" onclick="startLoading()">🔍 Begin Verification</button>
+    <div class="scroll-hint" style="margin-top:20px">▼</div>
+  </div>
+</div>
+
+<!-- SCREEN 2: AI LOADING -->
+<div id="loading" class="screen">
+  <div class="loading-inner glass">
+    <div class="ai-orb">🤖<div class="orb-ring"></div></div>
+    <h2>Initializing AI Analysis</h2>
+    <p>Please wait while our highly sophisticated algorithms process your friendship data...</p>
+    <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
+    <div id="progress-label" style="font-size:13px;color:var(--muted);margin-bottom:20px;text-align:left">Warming up neurons...</div>
+    <ul class="loading-steps">
+      <li class="loading-step" id="step-0"><div class="step-icon">🧠</div>Loading friendship algorithms</li>
+      <li class="loading-step" id="step-1"><div class="step-icon">💾</div>Importing bias modules</li>
+      <li class="loading-step" id="step-2"><div class="step-icon">📊</div>Calibrating expectations</li>
+      <li class="loading-step" id="step-3"><div class="step-icon">✨</div>Preparing questionnaire</li>
+    </ul>
+  </div>
+</div>
+
+<!-- SCREEN 3: QUESTIONS -->
+<div id="questions" class="screen">
+  <div class="q-container">
+    <div class="progress-dots" id="progress-dots"></div>
+    <div class="q-card glass" id="q-card"></div>
+  </div>
+</div>
+
+<!-- SCREEN 4: SENDING REPORT -->
+<div id="sending" class="screen">
+  <div class="send-inner glass">
+    <span class="send-icon">📡</span>
+    <h2>Transmitting Report</h2>
+    <p>Your responses are being securely sent to the Friendship Bureau of Records...</p>
+    <div class="send-lines" id="send-lines">
+      <div class="send-line" data-delay="400">
+        <div class="dot-spin"></div>
+        <span>Encrypting friendship data...</span>
+      </div>
+      <div class="send-line" data-delay="900">
+        <div class="line-dot" style="background:#6dff9a"></div>
+        <span>Uploading to cloud servers ✅</span>
+      </div>
+      <div class="send-line" data-delay="1400">
+        <div class="dot-spin"></div>
+        <span>Processing emotional analysis...</span>
+      </div>
+      <div class="send-line" data-delay="1900">
+        <div class="line-dot" style="background:#6dff9a"></div>
+        <span>Results compiled ✅</span>
+      </div>
+      <div class="send-line" data-delay="2400">
+        <div class="line-dot" style="background:var(--pink)"></div>
+        <span>Sending to dashboard 💌</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SCREEN 5: DASHBOARD -->
+<div id="dashboard" class="screen">
+  <div class="dash-inner">
+    <div class="dash-header glass">
+      <div class="friend-avatar">✨</div>
+      <div class="friendship-score">94</div>
+      <div class="score-label">Friendship Score™ (out of 100)</div>
+      <p style="font-size:14px;color:var(--muted)">Analysis complete · Results certified by the International Board of Made-Up Metrics</p>
+    </div>
+
+    <div class="dash-grid">
+      <div class="dash-card glass">
+        <div class="dash-card-icon">⚡</div>
+        <h3>Response Speed</h3>
+        <p>Somewhere between 🐢 and never</p>
+      </div>
+      <div class="dash-card glass">
+        <div class="dash-card-icon">🎭</div>
+        <h3>Attitude Level</h3>
+        <p>Certified Elite™ (self-assessed)</p>
+      </div>
+      <div class="dash-card glass">
+        <div class="dash-card-icon">🎬</div>
+        <h3>Movie Taste</h3>
+        <p>Objectively superior to mine</p>
+      </div>
+      <div class="dash-card glass">
+        <div class="dash-card-icon">📅</div>
+        <h3>Availability</h3>
+        <p>TBD (pending further negotiations)</p>
+      </div>
+    </div>
+
+    <div class="achievements">
+      <div class="ach-title">🏆 Achievements Unlocked</div>
+      <div class="ach-grid">
+        <div class="ach-card unlocked"><div class="icon">🌟</div><div class="name">Star Friend</div><div class="desc">Agreed to talk to me</div></div>
+        <div class="ach-card unlocked"><div class="icon">💖</div><div class="name">Brave Soul</div><div class="desc">Survived the date question</div></div>
+        <div class="ach-card unlocked"><div class="icon">🎬</div><div class="name">Cinema Buddy</div><div class="desc">Has movie opinions</div></div>
+        <div class="ach-card unlocked"><div class="icon">⏰</div><div class="name">Reply Queen</div><div class="desc">Replies... eventually</div></div>
+        <div class="ach-card unlocked"><div class="icon">😌</div><div class="name">Attitude Goals</div><div class="desc">Premium vibe certified</div></div>
+        <div class="ach-card unlocked"><div class="icon">🧠</div><div class="name">Survived AI</div><div class="desc">Completed this quiz</div></div>
+        <div class="ach-card"><div class="icon">🔒</div><div class="name">Next Month?</div><div class="desc">Unlock by showing up</div></div>
+        <div class="ach-card"><div class="icon">🔒</div><div class="name">Gift Recvd</div><div class="desc">Unlock: when I'm not lazy</div></div>
+      </div>
+    </div>
+
+    <div style="text-align:center;padding:12px">
+      <button class="btn btn-primary" onclick="showFinal()">📜 View Official Report</button>
+    </div>
+  </div>
+</div>
+
+<!-- SCREEN 6: FINAL MESSAGE -->
+<div id="final" class="screen">
+  <div class="final-inner">
+    <div class="final-card glass">
+      <span class="gift-icon">🎁</span>
+      <h1>Thanks Shivi ❤️</h1>
+      <p class="subtitle">Your responses have been successfully recorded and carefully ignored.</p>
+      <div style="border-top:1px solid rgba(255,255,255,0.1);padding-top:24px">
+        <p style="font-size:15px;color:var(--muted);margin-bottom:16px">Your Nykaa gift is on the way 🎁</p>
+        <div class="delivery-list">
+          <div class="delivery-item"><span class="check-yes">✅</span> Order Created</div>
+          <div class="delivery-item"><span class="check-yes">✅</span> Packed</div>
+          <div class="delivery-item"><span class="check-no">❌</span> Shipped</div>
+          <div class="delivery-item"><span class="check-no">❌</span> Actually Purchased</div>
+        </div>
+        <div class="final-note">
+          📦 Expected Delivery: Whenever I stop being lazy 😌
+        </div>
+        <div style="margin-top:24px;padding:16px;border-radius:12px;background:rgba(255,107,157,0.08);border:1px solid rgba(255,107,157,0.2)">
+          <p style="font-size:14px;color:rgba(255,200,220,0.9);text-align:center">
+            P.S. You're officially 94% certified as a great friend 🌟<br>
+            The remaining 6% will be verified next month 😇
+          </p>
+        </div>
+      </div>
+    </div>
+    <button class="btn btn-secondary" onclick="restart()" style="margin-top:20px">🔄 Take Again (Score may vary)</button>
+  </div>
+</div>
 
 <script>
-const qs=[
-{q:"Would you like to talk to me?",buttons:[["Yes","Excellent. Friendship remains active."],["No","Talk more. Your friendship subscription is about to expire."],["I Don't Know","Insufficient data. Please send more messages for analysis."]]},
-{q:"Would you like to go on a date with me?",date:true},
-{q:"Can we watch a movie together?",buttons:[["Yes","Good. Don't watch it with your friends first 😌"],["No","I knew it. You're officially on the naughty list."]]},
-{q:"Would you like to spend more time with me?",buttons:[["Yes","Good choice 😎"],["No","Your answer has been ignored. Please try being nicer."]]},
-{q:"Are you sure you're coming next month to meet me?",meet:true},
-{q:"How much attitude do you have?",buttons:[["Very Little","Analysis Complete: Dangerous Amount Detected 😂"],["Medium","Analysis Complete: Dangerous Amount Detected 😂"],["Dangerous Amount","Analysis Complete: Dangerous Amount Detected 😂"]]},
-{q:"How fast do you reply to messages?",buttons:[["Instantly","Verified: Whenever I Remember 😭"],["Eventually","Verified: Whenever I Remember 😭"],["When I Remember","Verified: Whenever I Remember 😭"]]}
+// ——— UTILS ———
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+function toast(msg,type='info'){
+  const c=document.getElementById('toast-container');
+  const t=document.createElement('div');
+  t.className=`toast toast-${type}`;
+  t.textContent=msg;
+  c.appendChild(t);
+  setTimeout(()=>{t.classList.add('removing');setTimeout(()=>t.remove(),300)},3200);
+}
+
+// ——— CONFETTI ———
+const canvas=document.getElementById('confetti-canvas');
+const ctx=canvas.getContext('2d');
+let confettis=[],confettiRunning=false;
+function initCanvas(){canvas.width=window.innerWidth;canvas.height=window.innerHeight}
+initCanvas();
+window.addEventListener('resize',initCanvas);
+
+function launchConfetti(){
+  confettiRunning=true;
+  const colors=['#ff6b9d','#c44dff','#4d79ff','#ffd700','#ff4444','#6dff9a','#fff'];
+  for(let i=0;i<150;i++){
+    confettis.push({
+      x:Math.random()*canvas.width,y:-20,
+      w:Math.random()*10+4,h:Math.random()*6+3,
+      color:colors[Math.floor(Math.random()*colors.length)],
+      vx:(Math.random()-0.5)*6,vy:Math.random()*4+2,
+      rot:Math.random()*360,vr:(Math.random()-0.5)*8,
+      life:1,decay:Math.random()*0.008+0.004
+    });
+  }
+  animateConfetti();
+}
+function animateConfetti(){
+  if(!confettiRunning)return;
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  confettis=confettis.filter(c=>c.life>0);
+  confettis.forEach(c=>{
+    ctx.save();ctx.globalAlpha=c.life;ctx.fillStyle=c.color;
+    ctx.translate(c.x,c.y);ctx.rotate(c.rot*Math.PI/180);
+    ctx.fillRect(-c.w/2,-c.h/2,c.w,c.h);ctx.restore();
+    c.x+=c.vx;c.y+=c.vy;c.rot+=c.vr;c.vy+=0.1;c.life-=c.decay;
+  });
+  if(confettis.length)requestAnimationFrame(animateConfetti);
+  else{confettiRunning=false;ctx.clearRect(0,0,canvas.width,canvas.height)}
+}
+
+function spawnFloaters(){
+  const emojis=['❤️','💕','🌟','✨','🎁','💖','🥳','🎉','💝','🌸'];
+  for(let i=0;i<20;i++){
+    setTimeout(()=>{
+      const e=document.createElement('div');
+      e.className='emoji-floater';
+      e.textContent=emojis[Math.floor(Math.random()*emojis.length)];
+      e.style.left=Math.random()*100+'vw';
+      e.style.bottom='0px';
+      e.style.animationDuration=(Math.random()*3+3)+'s';
+      e.style.fontSize=(Math.random()*20+20)+'px';
+      document.body.appendChild(e);
+      setTimeout(()=>e.remove(),6000);
+    },i*200);
+  }
+}
+
+// ——— LANDING ———
+function startLoading(){
+  showScreen('loading');
+  runLoadingAnim();
+}
+
+function runLoadingAnim(){
+  const fill=document.getElementById('progress-fill');
+  const label=document.getElementById('progress-label');
+  const steps=['Warming up neurons...','Loading friendship algorithms...','Calibrating bias...','Ready!'];
+  const stepEls=[0,1,2,3].map(i=>document.getElementById('step-'+i));
+  let pct=0;
+  const intervals=[
+    {t:300,fn:()=>{pct=25;fill.style.width='25%';label.textContent=steps[0];stepEls[0].classList.add('done');stepEls[0].querySelector('.step-icon').textContent='✅'}},
+    {t:900,fn:()=>{pct=50;fill.style.width='50%';label.textContent=steps[1];stepEls[1].classList.add('done');stepEls[1].querySelector('.step-icon').textContent='✅'}},
+    {t:1500,fn:()=>{pct=75;fill.style.width='75%';label.textContent=steps[2];stepEls[2].classList.add('done');stepEls[2].querySelector('.step-icon').textContent='✅'}},
+    {t:2100,fn:()=>{pct=100;fill.style.width='100%';label.textContent=steps[3];stepEls[3].classList.add('done');stepEls[3].querySelector('.step-icon').textContent='✅'}},
+    {t:2700,fn:()=>{showScreen('questions');buildQuestion(0);toast('AI analysis complete! 🧠','success')}},
+  ];
+  intervals.forEach(({t,fn})=>setTimeout(fn,t));
+}
+
+// ——— QUESTIONS ———
+const answers=[];
+let noEscapeCount=0;
+let boardOverride=false;
+const totalQ=7;
+
+const questions=[
+  {
+    id:'talk',emoji:'👋',
+    title:'Would you like to talk to me?',
+    sub:'This is a legally binding question. Choose wisely.',
+    type:'choice',
+    options:['Yes, obviously 😊','Depends on my mood 🤔','Do I have a choice? 🙃','I guess... 😌'],
+    onAnswer:(i)=>{
+      const msgs=['Great! The system approves ✅','Mood-based friendship accepted 📋','No, you do not 😌','We\'ll take it! 🎉'];
+      toast(msgs[i]||'Response noted!','success');
+    }
+  },
+  {
+    id:'date',emoji:'💕',
+    title:'Hypothetically speaking... would you go on a date with me?',
+    sub:'Your answer has been pre-approved. The "No" button is provided for dramatic purposes.',
+    type:'date_special',
+  },
+  {
+    id:'movie',emoji:'🎬',
+    title:'What kind of movies do you actually enjoy?',
+    sub:'This data will be used to plan the perfect movie night you\'ll never attend 😌',
+    type:'choice',
+    options:['Romcoms 💕','Thrillers 😰','Action & adventure 💥','Literally anything with good vibes ✨'],
+    onAnswer:(i)=>{
+      toast('Movie preference logged. Ignored. Re-logged. 🎬','info');
+    }
+  },
+  {
+    id:'time',emoji:'⏳',
+    title:'Would you like to spend more time with me?',
+    sub:'Research indicates the correct answer rhymes with "chess".',
+    type:'choice',
+    options:['Yes! Always 🥰','Yes but make it interesting 😏','Maybe if you\'re less chaotic 😅','Why not 🤷‍♀️'],
+    onAnswer:(i)=>{toast('Excellent judgment! ⭐','success')}
+  },
+  {
+    id:'nextmonth',emoji:'📅',
+    title:'Coming to visit next month?',
+    sub:'Note: "No" triggers a system error. This is a feature, not a bug.',
+    type:'nextmonth',
+    options:['Yes, definitely! 🛫','Maybe, let me check 🗓️','No (danger zone ⚠️)'],
+  },
+  {
+    id:'attitude',emoji:'😎',
+    title:'How would you rate your own attitude?',
+    sub:'Honesty optional. Confidence mandatory.',
+    type:'choice',
+    options:['Elite tier. No notes. 💅','Pretty great, honestly 😄','It depends on the day 🌤️','I\'m a work in progress ✨'],
+    onAnswer:(i)=>{toast('Certified correct answer regardless of choice 📜','info')}
+  },
+  {
+    id:'reply',emoji:'📱',
+    title:'How quickly do you usually reply to my messages?',
+    sub:'Results will be compared against satellite data.',
+    type:'choice',
+    options:['Instantly! 🚀','Within an hour ⏰','When I remember 😅','What\'s a "reply"? 🤔'],
+    onAnswer:(i)=>{
+      const msgs=['🚀 Impressive. Suspicious, but impressive.','Reasonable. We accept.','The system has noted this admission.','Error 404: Reply not found 😂'];
+      toast(msgs[i]||'Logged!','info');
+    }
+  },
 ];
-let i=0;
-const card=document.getElementById('card');
 
-function next(){i++;render();}
-
-function render(){
-if(i>=qs.length){finish();return;}
-let q=qs[i];
-if(q.date){
-card.innerHTML=`<h2>${q.q}</h2><button class="yes" onclick="msg('Request Approved ✅<br>The board of directors is pleased with your decision.')">Yes 😌</button><button class="no" id="nobtn">No 😂</button>`;
-let arr=["Nice Try 😂","Access Denied","System Error","Illegal Selection"];
-let c=0;
-document.getElementById('nobtn').onmouseover=function(){
-this.innerText=arr[c%arr.length];c++;
-this.style.position='fixed';
-this.style.left=Math.random()*(window.innerWidth-120)+'px';
-this.style.top=Math.random()*(window.innerHeight-60)+'px';
-}
-return;
-}
-if(q.meet){
-card.innerHTML=`<h2>${q.q}</h2><button class="yes" onclick="msg('Perfect. See you next month 😎')">Yes</button><button class="no" onclick="msg('⚠ SYSTEM ERROR<br>Required value cannot be FALSE.<br>Please select YES.')">No</button>`;
-return;
-}
-card.innerHTML=`<h2>${q.q}</h2>`+q.buttons.map(b=>`<button class="other" onclick="msg('${b[1]}')">${b[0]}</button>`).join('');
+function buildDots(){
+  const dots=document.getElementById('progress-dots');
+  dots.innerHTML='';
+  for(let i=0;i<totalQ;i++){
+    const d=document.createElement('div');
+    d.className='dot'+(i===currentQ?' active':i<currentQ?' done':'');
+    dots.appendChild(d);
+  }
 }
 
-function msg(t){
-card.innerHTML=`<h2>${t}</h2><button class='yes' onclick='next()'>Next ➜</button>`;
+let currentQ=0;
+function buildQuestion(idx){
+  currentQ=idx;
+  buildDots();
+  const q=questions[idx];
+  const card=document.getElementById('q-card');
+  if(q.type==='date_special'){buildDateQuestion(card);return}
+  if(q.type==='nextmonth'){buildNextMonthQuestion(card,q);return}
+  card.innerHTML=`
+    <span class="q-emoji">${q.emoji}</span>
+    <h2>${q.title}</h2>
+    <p>${q.sub}</p>
+    <div class="q-options">
+      ${q.options.map((o,i)=>`<button class="q-option" onclick="selectOption(${idx},${i})">${o}</button>`).join('')}
+    </div>
+  `;
 }
 
-function finish(){
-let score=Math.floor(Math.random()*3)+98;
-card.innerHTML=`
-<h1>🎉 Analysis Complete</h1>
-<h2>Friendship Compatibility: ${score}%</h2>
-<p>You survived this survey.</p>
-<p>✔ Certified Troublemaker<br>✔ Exam Stress Denier<br>✔ Selective Replier<br>✔ Approved Friend</p>
-<h3>🏆 Officially Approved Friend</h3>
-<p>Valid Until Further Drama</p>
-<hr>
-<p>Thank you Shivi ❤️</p>
-<p>Your responses have been recorded.</p>
-<p>Sending results to owner...</p>
-<p>Sending...<br>Still sending...<br>Owner received results.</p>
-<h3>Message from Owner:</h3>
-<p>"You're pretty awesome.<br>Thanks for putting up with my nonsense 😌"</p>
-<p><b>Now go send me a message. The survey has spoken.</b></p>`;
+function selectOption(qIdx,optIdx){
+  const q=questions[qIdx];
+  answers[qIdx]=optIdx;
+  document.querySelectorAll('.q-option').forEach(o=>o.classList.remove('selected'));
+  document.querySelectorAll('.q-option')[optIdx].classList.add('selected');
+  if(q.onAnswer)q.onAnswer(optIdx);
+  setTimeout(()=>nextQuestion(),700);
 }
 
-let p=0;
-const msgs=["Checking WhatsApp reply speed...","Scanning attitude levels...","Detecting exam stress...","Finding red flags..."];
-let m=0;
-const t=setInterval(()=>{
-p+=4;
-document.getElementById('fill').style.width=p+'%';
-if(p%25===0 && m<msgs.length-1){m++;document.getElementById('status').innerText=msgs[m];}
-if(p>=100){
-clearInterval(t);
-document.getElementById('loading').classList.remove('active');
-document.getElementById('app').classList.add('active');
-render();
+function nextQuestion(){
+  if(currentQ<totalQ-1){buildQuestion(currentQ+1)}
+  else{showSending()}
 }
-},80);
 
-for(let j=0;j<20;j++){
-let e=document.createElement('div');
-e.className='emoji';
-e.innerHTML=['😂','🎉','✨','🤝','😎'][Math.floor(Math.random()*5)];
-e.style.left=Math.random()*100+'vw';
-e.style.animationDuration=(6+Math.random()*8)+'s';
-document.body.appendChild(e);
+// DATE QUESTION
+function buildDateQuestion(card){
+  noEscapeCount=0;boardOverride=false;
+  card.innerHTML=`
+    <span class="q-emoji">💕</span>
+    <h2>Hypothetically speaking...<br>would you go on a date with me?</h2>
+    <p>Your answer has been pre-approved. The "No" button is provided for dramatic purposes only.</p>
+    <div class="btn-row" id="date-btn-row">
+      <button class="btn btn-primary" id="yes-btn" onclick="dateYes()">Yes! 🥰</button>
+      <button class="btn-no" id="no-btn" onclick="dateNo()">No 🙅‍♀️</button>
+    </div>
+    <div id="board-msg" style="margin-top:16px;font-size:14px;color:var(--muted);min-height:24px;text-align:center"></div>
+  `;
+}
+
+function dateYes(){
+  toast('Correct answer! The board approves! 🎉','success');
+  answers[1]='yes';
+  setTimeout(()=>nextQuestion(),600);
+}
+
+const noMsgs=[
+  "Hmm, that button seems to have moved 🤔",
+  "Interesting. Trying again? 😏",
+  "The system has flagged this response...",
+  "Error: Incorrect answer detected 🚨",
+  "Last chance before board intervention ⚠️"
+];
+
+function dateNo(){
+  noEscapeCount++;
+  const btn=document.getElementById('no-btn');
+  const msg=document.getElementById('board-msg');
+  if(noEscapeCount<5){
+    msg.textContent=noMsgs[noEscapeCount-1]||'...';
+    // Move button randomly
+    const row=document.getElementById('date-btn-row');
+    const maxX=Math.min(80,window.innerWidth/4);
+    const x=(Math.random()-0.5)*maxX;
+    const y=(Math.random()-0.5)*30;
+    btn.style.transform=`translate(${x}px,${y}px)`;
+    toast(`Attempt ${noEscapeCount}/5 😂`,'error');
+  } else {
+    // 5th press: make it clickable then override
+    btn.style.transform='translate(0,0)';
+    msg.textContent='Oh wait, it works now! Go ahead... 😏';
+    btn.onclick=()=>{
+      msg.innerHTML='<span style="color:var(--pink)">🚨 BOARD OVERRIDE ACTIVATED 🚨<br>Decision reversed. You said yes. Congratulations! 🎊</span>';
+      toast('Board has overridden your decision! 🎊','success');
+      answers[1]='board_override_yes';
+      setTimeout(()=>nextQuestion(),1800);
+    };
+  }
+}
+
+// NEXT MONTH QUESTION
+function buildNextMonthQuestion(card,q){
+  card.innerHTML=`
+    <span class="q-emoji">${q.emoji}</span>
+    <h2>${q.title}</h2>
+    <p>${q.sub}</p>
+    <div class="q-options">
+      ${q.options.map((o,i)=>`<button class="q-option" onclick="nextMonthAnswer(${i})">${o}</button>`).join('')}
+    </div>
+  `;
+}
+
+function nextMonthAnswer(i){
+  if(i===2){
+    document.getElementById('error-screen').classList.add('active');
+    toast('SYSTEM ERROR TRIGGERED 🚨','error');
+  } else {
+    answers[4]=i;
+    toast(i===0?'Perfect! Booking you in 🛫':'We\'ll pencil it in 📅','success');
+    setTimeout(()=>nextQuestion(),700);
+  }
+}
+
+function dismissError(){
+  document.getElementById('error-screen').classList.remove('active');
+  answers[4]='reluctant_yes';
+  toast('Crisis averted! See you next month! 😇','success');
+  setTimeout(()=>nextQuestion(),500);
+}
+
+// ——— SENDING ———
+function showSending(){
+  showScreen('sending');
+  const lines=document.querySelectorAll('.send-line');
+  lines.forEach(l=>{
+    const delay=parseInt(l.dataset.delay)||0;
+    setTimeout(()=>l.classList.add('visible'),delay);
+  });
+  setTimeout(()=>{showScreen('dashboard');toast('Report delivered! 📋','success')},3400);
+}
+
+// ——— FINAL ———
+function showFinal(){
+  showScreen('final');
+  launchConfetti();
+  spawnFloaters();
+  toast('Thanks Shivi! ❤️','success');
+  setTimeout(()=>{
+    launchConfetti();
+    spawnFloaters();
+  },2000);
+}
+
+function restart(){
+  answers.length=0;
+  noEscapeCount=0;boardOverride=false;currentQ=0;
+  showScreen('landing');
+  toast('Starting over... bravely 🌟','info');
 }
 </script>
 </body>
