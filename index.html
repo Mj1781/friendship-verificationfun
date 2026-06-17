@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Friendship Verification Portal</title>
+<style>
+body{margin:0;font-family:Arial,sans-serif;background:linear-gradient(135deg,#667eea,#764ba2,#f093fb);color:#fff;overflow:hidden}
+.screen{display:none;height:100vh;justify-content:center;align-items:center;text-align:center;padding:20px}
+.active{display:flex;flex-direction:column}
+.card{background:rgba(255,255,255,.12);backdrop-filter:blur(10px);padding:25px;border-radius:20px;max-width:700px;width:90%}
+button{padding:12px 22px;border:none;border-radius:12px;margin:8px;font-size:16px;cursor:pointer}
+.yes{background:#4caf50;color:white}.no{background:#ff5252;color:white}.other{background:#ffb300;color:black}
+.bar{width:320px;height:22px;background:rgba(255,255,255,.2);border-radius:20px;overflow:hidden}
+.fill{height:100%;width:0;background:white}
+.emoji{position:fixed;opacity:.25;animation:float 10s linear infinite}
+@keyframes float{from{transform:translateY(100vh)}to{transform:translateY(-100px)}}
+</style>
+</head>
+<body>
+
+<div id="loading" class="screen active">
+<h1>🧠 Friendship Verification Portal</h1>
+<div class="bar"><div class="fill" id="fill"></div></div>
+<p id="status">Checking WhatsApp reply speed...</p>
+</div>
+
+<div id="app" class="screen"><div class="card" id="card"></div></div>
+
+<script>
+const qs=[
+{q:"Would you like to talk to me?",buttons:[["Yes","Excellent. Friendship remains active."],["No","Talk more. Your friendship subscription is about to expire."],["I Don't Know","Insufficient data. Please send more messages for analysis."]]},
+{q:"Would you like to go on a date with me?",date:true},
+{q:"Can we watch a movie together?",buttons:[["Yes","Good. Don't watch it with your friends first 😌"],["No","I knew it. You're officially on the naughty list."]]},
+{q:"Would you like to spend more time with me?",buttons:[["Yes","Good choice 😎"],["No","Your answer has been ignored. Please try being nicer."]]},
+{q:"Are you sure you're coming next month to meet me?",meet:true},
+{q:"How much attitude do you have?",buttons:[["Very Little","Analysis Complete: Dangerous Amount Detected 😂"],["Medium","Analysis Complete: Dangerous Amount Detected 😂"],["Dangerous Amount","Analysis Complete: Dangerous Amount Detected 😂"]]},
+{q:"How fast do you reply to messages?",buttons:[["Instantly","Verified: Whenever I Remember 😭"],["Eventually","Verified: Whenever I Remember 😭"],["When I Remember","Verified: Whenever I Remember 😭"]]}
+];
+let i=0;
+const card=document.getElementById('card');
+
+function next(){i++;render();}
+
+function render(){
+if(i>=qs.length){finish();return;}
+let q=qs[i];
+if(q.date){
+card.innerHTML=`<h2>${q.q}</h2><button class="yes" onclick="msg('Request Approved ✅<br>The board of directors is pleased with your decision.')">Yes 😌</button><button class="no" id="nobtn">No 😂</button>`;
+let arr=["Nice Try 😂","Access Denied","System Error","Illegal Selection"];
+let c=0;
+document.getElementById('nobtn').onmouseover=function(){
+this.innerText=arr[c%arr.length];c++;
+this.style.position='fixed';
+this.style.left=Math.random()*(window.innerWidth-120)+'px';
+this.style.top=Math.random()*(window.innerHeight-60)+'px';
+}
+return;
+}
+if(q.meet){
+card.innerHTML=`<h2>${q.q}</h2><button class="yes" onclick="msg('Perfect. See you next month 😎')">Yes</button><button class="no" onclick="msg('⚠ SYSTEM ERROR<br>Required value cannot be FALSE.<br>Please select YES.')">No</button>`;
+return;
+}
+card.innerHTML=`<h2>${q.q}</h2>`+q.buttons.map(b=>`<button class="other" onclick="msg('${b[1]}')">${b[0]}</button>`).join('');
+}
+
+function msg(t){
+card.innerHTML=`<h2>${t}</h2><button class='yes' onclick='next()'>Next ➜</button>`;
+}
+
+function finish(){
+let score=Math.floor(Math.random()*3)+98;
+card.innerHTML=`
+<h1>🎉 Analysis Complete</h1>
+<h2>Friendship Compatibility: ${score}%</h2>
+<p>You survived this survey.</p>
+<p>✔ Certified Troublemaker<br>✔ Exam Stress Denier<br>✔ Selective Replier<br>✔ Approved Friend</p>
+<h3>🏆 Officially Approved Friend</h3>
+<p>Valid Until Further Drama</p>
+<hr>
+<p>Thank you Shivi ❤️</p>
+<p>Your responses have been recorded.</p>
+<p>Sending results to owner...</p>
+<p>Sending...<br>Still sending...<br>Owner received results.</p>
+<h3>Message from Owner:</h3>
+<p>"You're pretty awesome.<br>Thanks for putting up with my nonsense 😌"</p>
+<p><b>Now go send me a message. The survey has spoken.</b></p>`;
+}
+
+let p=0;
+const msgs=["Checking WhatsApp reply speed...","Scanning attitude levels...","Detecting exam stress...","Finding red flags..."];
+let m=0;
+const t=setInterval(()=>{
+p+=4;
+document.getElementById('fill').style.width=p+'%';
+if(p%25===0 && m<msgs.length-1){m++;document.getElementById('status').innerText=msgs[m];}
+if(p>=100){
+clearInterval(t);
+document.getElementById('loading').classList.remove('active');
+document.getElementById('app').classList.add('active');
+render();
+}
+},80);
+
+for(let j=0;j<20;j++){
+let e=document.createElement('div');
+e.className='emoji';
+e.innerHTML=['😂','🎉','✨','🤝','😎'][Math.floor(Math.random()*5)];
+e.style.left=Math.random()*100+'vw';
+e.style.animationDuration=(6+Math.random()*8)+'s';
+document.body.appendChild(e);
+}
+</script>
+</body>
+</html>
